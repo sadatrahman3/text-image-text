@@ -35,8 +35,19 @@ jobs:
       - name: Create local.properties
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
 
+      - name: Install SDK components
+        run: |
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME \
+            "platforms;android-34" "build-tools;34.0.0" 2>&1 || echo "sdkmanager not at path, trying alternative..."
+          # Fallback: try other paths
+          find $ANDROID_HOME -name "sdkmanager" -type f 2>/dev/null
+          ls -la $ANDROID_HOME/cmdline-tools/ 2>/dev/null
+
       - name: Build
-        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls -la local.properties
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1
 
       - name: Upload APK
         if: success()
