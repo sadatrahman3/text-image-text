@@ -22,30 +22,19 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Debug - check SDK
+      - name: Install SDK components
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          ls -la $ANDROID_HOME/ || echo "No ANDROID_HOME"
-          ls -la $ANDROID_SDK_ROOT/ || echo "No ANDROID_SDK_ROOT"
-          which sdkmanager || find / -name sdkmanager 2>/dev/null | head -5
+          SDKMANAGER=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
+          yes | $SDKMANAGER --sdk_root=$ANDROID_HOME "platforms;android-34" "build-tools;34.0.0" 2>&1
 
-      - name: Install SDK platform
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME \
-            "platforms;android-34" "build-tools;34.0.0" 2>&1
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" > ImageTextApp/local.properties
 
       - name: Build debug APK
         run: |
           cd ImageTextApp
           chmod +x gradlew
-          export ANDROID_HOME=$ANDROID_HOME
-          echo "Starting Gradle build..."
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
-        shell: bash
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload debug APK
         if: success()
