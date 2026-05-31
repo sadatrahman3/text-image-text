@@ -19,21 +19,21 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Use pre-installed Android SDK
+      - name: Prepare SDK
         run: |
           echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+          echo "sdk.dir=/usr/local/lib/android/sdk" > ImageTextApp/local.properties
+          ls -la /usr/local/lib/android/sdk/platforms/
+          ls -la /usr/local/lib/android/sdk/build-tools/
 
-      - name: Create local.properties
-        run: echo "sdk.dir=/usr/local/lib/android/sdk" > ImageTextApp/local.properties
-
-      - name: Build debug APK
+      - name: Build
         run: |
           cd ImageTextApp
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
 
-      - name: Upload debug APK
+      - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
@@ -48,7 +48,6 @@ jobs:
           name: "Img2Txt ${{ github.ref_name }}"
           body: |
             ## Img2Txt - Image to Text Converter
-
             Convert images to Base64 text and back, losslessly.
           files: |
             ImageTextApp/app/build/outputs/apk/debug/app-debug.apk
