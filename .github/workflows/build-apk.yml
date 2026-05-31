@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: ImageTextApp
@@ -43,10 +43,19 @@ jobs:
           find $ANDROID_HOME -name "sdkmanager" -type f 2>/dev/null
           ls -la $ANDROID_HOME/cmdline-tools/ 2>/dev/null
 
+      - name: Create debug keystore
+        run: |
+          mkdir -p $HOME/.android
+          keytool -genkey -v -keystore $HOME/.android/debug.keystore \
+            -storepass android -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
+
       - name: Build
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           ls -la local.properties
+          ls -la $HOME/.android/debug.keystore 2>/dev/null || echo "no debug keystore"
           ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1
 
       - name: Upload APK
