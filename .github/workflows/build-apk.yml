@@ -3,12 +3,8 @@ name: Build and Release APK
 on:
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Release version (e.g. v1.0.0)'
-        required: false
-        type: string
 
 jobs:
   build:
@@ -29,15 +25,10 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ImageTextApp/gradlew
 
-      - name: Build debug APK
+      - name: Build APK
         run: |
           cd ImageTextApp
-          ./gradlew assembleDebug --no-daemon
-
-      - name: Build release APK (unsigned)
-        run: |
-          cd ImageTextApp
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleDebug assembleRelease --no-daemon
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -52,27 +43,38 @@ jobs:
           path: ImageTextApp/app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Create Release
-        id: create_release
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.version != '' }}
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.version }}
-          name: "Img2Txt ${{ inputs.version }}"
+          name: "Img2Txt ${{ github.ref_name }}"
           body: |
             ## Img2Txt - Image to Text Converter
-            
-            Convert images to Base64 text and back, losslessly.
-            
+
+            Convert images to Base64 text and back, losslessly — perfect for messengers that only support text.
+
             ### Features
             - **Image → Text**: Convert any image to Base64 text (PNG, lossless)
             - **Text → Image**: Decode Base64 text back to original image
             - **Copy/Share**: Share encoded text via any messenger
             - **Save**: Decoded images can be saved to gallery
-            
+            - **No quality loss**: Uses PNG compression at 100% quality
+
             ### How to use
             1. Open the app
-            2. Pick an image → it converts to text
+            2. Pick an image → it converts to Base64 text
             3. Copy/share the text via your messenger
-            4. On the receiving side, paste the text → decode → save the image
+            4. On the receiving end, paste the text → decode → save the image
+
+            ### Downloads
+            - **`app-debug.apk`** — debug-signed, ready to install
+            - **`app-release-unsigned.apk`** — unsigned release (sign before distribution)
+
+            ### Build from source
+            ```bash
+            git clone https://github.com/sadatrahman3/text-image-text.git
+            cd text-image-text/ImageTextApp
+            ./gradlew assembleDebug
+            ```
           files: |
             ImageTextApp/app/build/outputs/apk/debug/app-debug.apk
+            ImageTextApp/app/build/outputs/apk/release/app-release-unsigned.apk
